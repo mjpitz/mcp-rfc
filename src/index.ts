@@ -18,8 +18,8 @@ class RfcServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'rfc-server',
-        version: '1.0.0',
+        name: '@mjpitz/mcp-rfc',
+        version: '0.2504.4',
       },
       {
         capabilities: {
@@ -41,18 +41,6 @@ class RfcServer {
   }
 
   private setupResourceHandlers() {
-    // List available RFC resources
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-      resources: [
-        {
-          uri: 'rfc://latest',
-          name: 'Latest RFCs',
-          description: 'List of the most recently published RFCs',
-          mimeType: 'application/json',
-        },
-      ],
-    }));
-
     // Define RFC resource templates
     this.server.setRequestHandler(
       ListResourceTemplatesRequestSchema,
@@ -77,20 +65,6 @@ class RfcServer {
     // Handle resource requests
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const uri = request.params.uri;
-      
-      // Handle latest RFCs
-      if (uri === 'rfc://latest') {
-        const latestRfcs = await rfcService.getLatestRfcs(10);
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: 'application/json',
-              text: JSON.stringify(latestRfcs, null, 2),
-            },
-          ],
-        };
-      }
       
       // Handle RFC by number
       const rfcNumberMatch = uri.match(/^rfc:\/\/(\d+)$/);
@@ -187,21 +161,6 @@ class RfcServer {
               },
             },
             required: ['query'],
-            additionalProperties: false,
-          },
-        },
-        {
-          name: 'get_latest_rfcs',
-          description: 'Get a list of the latest published RFCs',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              limit: {
-                type: 'number',
-                description: 'Maximum number of RFCs to return',
-                default: 10,
-              },
-            },
             additionalProperties: false,
           },
         },
@@ -312,33 +271,6 @@ class RfcServer {
                 {
                   type: 'text',
                   text: `Error searching for RFCs: ${error}`,
-                },
-              ],
-              isError: true,
-            };
-          }
-        }
-        
-        case 'get_latest_rfcs': {
-          const limit = typeof typedArgs.limit === 'number' ? typedArgs.limit : 10;
-          
-          try {
-            const latestRfcs = await rfcService.getLatestRfcs(limit);
-            
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(latestRfcs, null, 2),
-                },
-              ],
-            };
-          } catch (error) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `Error fetching latest RFCs: ${error}`,
                 },
               ],
               isError: true,

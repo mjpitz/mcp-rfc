@@ -71,8 +71,8 @@ export class RfcService {
    */
   async searchRfcs(keyword: string): Promise<RfcMetadata[]> {
     try {
-      // Search on the IETF website
-      const searchUrl = `https://www.ietf.org/search/?query=${encodeURIComponent(keyword)}`;
+      // Search on the RFC Editor website
+      const searchUrl = `https://www.rfc-editor.org/search/rfc_search_detail.php?title=${encodeURIComponent(keyword)}&pubstatus%5B%5D=Any&pub_date_type=any`;
       const response = await axios.get(searchUrl);
       
       const dom = new JSDOM(response.data);
@@ -80,88 +80,75 @@ export class RfcService {
       
       // Extract search results
       const results: RfcMetadata[] = [];
-      const searchResults = document.querySelectorAll('.search-listing-content');
       
-      for (const result of searchResults) {
-        const titleElement = result.querySelector('h4 a');
-        if (!titleElement) continue;
+      // The results are in a table with class 'gridtable'
+      const resultsTable = document.querySelector('table.gridtable');
+      
+      if (!resultsTable) {
+        // If we can't find the gridtable, look for any table after the results count
+        const resultNodes = Array.from(document.querySelectorAll('p')).filter(
+          node => node.textContent?.includes('results') && /\d+\s+results/.test(node.textContent)
+        );
         
-        const titleText = titleElement.textContent?.trim() || '';
-        const url = titleElement.getAttribute('href') || '';
-        
-        // Check if this is an RFC result
-        const rfcMatch = titleText.match(/RFC\s+(\d+)/i);
-        if (!rfcMatch) continue;
-        
-        const rfcNumber = rfcMatch[1];
-        const descriptionElement = result.querySelector('.snippet');
-        const description = descriptionElement?.textContent?.trim() || '';
-        
-        results.push({
-          number: rfcNumber,
-          title: titleText.replace(/RFC\s+\d+:\s*/i, '').trim(),
-          authors: [], // Would need to fetch the full RFC to get this
-          date: '', // Would need to fetch the full RFC to get this
-          status: '', // Would need to fetch the full RFC to get this
-          abstract: description,
-          url: url.startsWith('http') ? url : `https://www.ietf.org${url}`
-        });
+        if (resultNodes.length === 0) return results;
       }
       
-      return results;
-    } catch (error) {
-      throw new Error(`Failed to search for RFCs: ${error}`);
-    }
-  }
-
-  /**
-   * Get a list of the latest RFCs
-   * @param limit Maximum number of RFCs to return
-   * @returns List of latest RFC metadata
-   */
-  async getLatestRfcs(limit: number = 10): Promise<RfcMetadata[]> {
-    try {
-      const latestUrl = 'https://www.ietf.org/standards/rfcs/';
-      const response = await axios.get(latestUrl);
+      // Get all rows from the results table
+      const rows = resultsTable?.querySelectorAll('tr');
+      if (!rows || rows.length <= 1) return results;
       
-      const dom = new JSDOM(response.data);
-      const document = dom.window.document;
-      
-      // Extract latest RFCs
-      const results: RfcMetadata[] = [];
-      const rfcElements = document.querySelectorAll('table.table tr');
-      
-      let count = 0;
-      for (const element of rfcElements) {
-        if (count >= limit) break;
+      // Skip the header row
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.querySelectorAll('td');
         
-        const cells = element.querySelectorAll('td');
-        if (cells.length < 3) continue; // Header row or invalid row
-        
-        const rfcLink = cells[0].querySelector('a');
-        if (!rfcLink) continue;
-        
-        const rfcNumber = rfcLink.textContent?.trim().replace('RFC', '').trim() || '';
-        const title = cells[1].textContent?.trim() || '';
-        const date = cells[2].textContent?.trim() || '';
-        
-        if (rfcNumber) {
+        if (cells.length >= 5) {
+          // Extract RFC number from first column
+          const rfcLinkElement = cells[0].querySelector('a');
+          if (!rfcLinkElement) continue;
+          
+          // Get RFC number from text content
+          let rfcNumber = '';
+          const rfcTextContent = rfcLinkElement.textContent?.trim() || '';
+          const rfcMatch = rfcTextContent.match(/RFC\s*(\d+)/i);
+          if (rfcMatch && rfcMatch[1]) {
+            rfcNumber = rfcMatch[1];
+          }
+          
+          if (!rfcNumber) continue;
+          
+          // Title is in the third column
+          const title = cells[2].textContent?.trim() || '';
+          
+          // Authors are in the fourth column
+          const authorsText = cells[3].textContent?.trim() || '';
+          const authors = authorsText ? [authorsText] : [];
+          
+          // Date is in the fifth column
+          const date = cells[4].textContent?.trim() || '';
+          
+          // Status is in the seventh column
+          const status = cells[6]?.textContent?.trim() || '';
+          
+          // Get URL from the link in the first column
+          const url = rfcLinkElement.getAttribute('href') || `https://www.rfc-editor.org/info/rfc${rfcNumber}`;
+          
           results.push({
             number: rfcNumber,
             title,
-            authors: [], // Would need to fetch the full RFC to get this
+            authors,
             date,
-            status: '', // Would need to fetch the full RFC to get this
+            status,
             abstract: '', // Would need to fetch the full RFC to get this
-            url: `https://www.ietf.org/rfc/rfc${rfcNumber}.txt`
+            url
           });
-          count++;
         }
       }
       
       return results;
     } catch (error) {
-      throw new Error(`Failed to get latest RFCs: ${error}`);
+      console.error('Error in searchRfcs:', error);
+      return []; // Return empty array instead of throwing
     }
   }
 

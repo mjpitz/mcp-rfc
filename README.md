@@ -6,7 +6,6 @@ An MCP server for fetching, parsing, and reading RFCs from the ietf.org website.
 
 - Fetch RFC documents by number
 - Search for RFCs by keyword
-- Get a list of the latest published RFCs
 - Extract specific sections from RFC documents
 - Parse both HTML and TXT format RFCs
 - Caching for better performance
@@ -62,20 +61,6 @@ Search for RFCs by keyword.
 }
 ```
 
-### get_latest_rfcs
-
-Get a list of the latest published RFCs.
-
-**Parameters:**
-- `limit` (number, optional): Maximum number of RFCs to return, default: 10
-
-**Example:**
-```json
-{
-  "limit": 5
-}
-```
-
 ### get_rfc_section
 
 Get a specific section from an RFC.
@@ -93,10 +78,6 @@ Get a specific section from an RFC.
 ```
 
 ## Available Resources
-
-### Direct Resources
-
-- `rfc://latest`: List of the most recently published RFCs
 
 ### Resource Templates
 

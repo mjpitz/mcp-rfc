@@ -1,6 +1,6 @@
 {
   "name": "@mjpitz/mcp-rfc",
-  "version": "0.2504.3",
+  "version": "0.2504.4",
   "main": "build/index.js",
   "bin": "build/index.js",
   "type": "module",
