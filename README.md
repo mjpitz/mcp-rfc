@@ -13,28 +13,20 @@ An MCP server for fetching, parsing, and reading RFCs from the ietf.org website.
 
 ## Installation
 
-1. Clone the repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Build the server:
-   ```
-   npm run build
-   ```
-4. Configure your MCP settings file to use the server:
-   ```json
-   {
-     "mcpServers": {
-       "rfc-server": {
-         "command": "node",
-         "args": ["/path/to/mcp-rfc/build/index.js"],
-         "disabled": false,
-         "autoApprove": []
-       }
-     }
-   }
-   ```
+Configure your MCP settings file to use the server:
+
+```json
+{
+  "mcpServers": {
+    "rfc-server": {
+      "command": "npx",
+      "args": ["@mjpitz/mcp-rfc"],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
 
 ## Available Tools
 

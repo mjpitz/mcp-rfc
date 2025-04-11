@@ -1,7 +1,8 @@
 {
-  "name": "mcp-rfc",
-  "version": "1.0.0",
+  "name": "@mjpitz/mcp-rfc",
+  "version": "0.2504.3",
   "main": "build/index.js",
+  "bin": "build/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc && chmod +x build/index.js",

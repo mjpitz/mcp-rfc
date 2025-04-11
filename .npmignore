@@ -1,0 +1,10 @@
+# Ignore everything by default
+*
+
+# Allow only specific files/directories
+!build/
+!build/**
+!LICENSE
+!package.json
+!package-lock.json
+!README.md
